@@ -16,12 +16,13 @@ headers = {
     'Zotero-API-Version': '3'
 }
 
-def zotero(endpoint):
+def zotero(endpoint, debug=False):
   try:
     # Make request to the correct endpoint, not the base URL
     response = requests.get(f"{ZOTERO_API}/users/{ZOTERO_API_USER}" + endpoint, headers=headers)
     
-    print(f"status: {response.status_code}")
+    if debug == True:
+      print(f"status: {response.status_code}")
     
     # Check if response is valid before trying to parse JSON
     if response.status_code == 200:
@@ -37,18 +38,21 @@ def zotero(endpoint):
   except requests.exceptions.RequestException as e:
       print(f"Request error: {e}")
 
-def fetch_tags():
+def fetch_tags(limit=100):
   tags = []
-  for t in zotero("/tags?limit=100"):
+  for t in zotero(f"/tags?limit={limit}"):
      tags.append({"name": t['tag'], "annotations": t['meta']['numItems']})
   
   return tags
 
-def fetch_items():
-   data = zotero("/items?limit=100")
+def fetch_items(limit=100):
+   data = zotero(f"/items?limit={limit}&format=json&include=data,bib,citation")
    return data
 
-def get_items_for_tag(tag):
+def fetch_single_item(id):
+   return zotero(f"/items/{id}")
+
+def fetch_items_for_tag(tag):
    items_with_tag = []
    
    for item in fetch_items():
@@ -60,12 +64,36 @@ def get_items_for_tag(tag):
    
    result = []
    for item in items_with_tag:
-      result.append({
+      annotation = {
         "page":  item['data']['annotationPageLabel'],
         "text":  item['data']['annotationText'],
         "comment":  item['data']['annotationComment'],
         "tags":  tags
-      })
+      }
+
+      ancestors = []
+      
+      # fetch extra stuff here
+      if item['data']['itemType'] == 'annotation':
+         pdf=None
+         article=None
+
+         for ancestor in ancestors:
+            if ancestor['pdf']['key'] == item['data']['parentItem']:
+               pdf = ancestor['pdf']
+               article = ancestor['article']
+               break
+            
+         if pdf is None:
+          pdf=zotero(f"/items/{item['data']['parentItem']}")
+          article=zotero(f"/items/{pdf['data']['parentItem']}")
+          ancestors.append({"pdf": pdf, "article": article})
+
+         if pdf and article:
+          annotation['authors'] = [a['lastName'] for a in article['data']['creators']]
+          annotation['title'] = article['data']['title']
+
+      result.append(annotation)
 
    return result
 
@@ -75,12 +103,12 @@ if __name__ == "__main__":
   if tag == None:
      raise ValueError("You need to pass a tag")
 
-  items=get_items_for_tag(tag)
+  items=fetch_items_for_tag(tag)
   print(f"total: {len(items)}")
   print(f"tag: {tag}")
 
   content = f"# {tag} annotations\n"
   for item in items:
-    content = content + f"\n{item['text']} pg. {item['page']} (tags: {', '.join(item['tags'])})\n\n"
+    content = content + f"\n{item['text']} pg. {item['page']} (authors: {', '.join(item['authors'])}) (tags: {', '.join(item['tags'])})\n\n"
 
   print(content)
