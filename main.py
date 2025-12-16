@@ -5,9 +5,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-ZOTERO_API=os.getenv("API_BASE_URL")
-ZOTERO_API_USER=os.getenv("API_USER")
-ZOTERO_API_TOKEN=os.getenv("API_TOKEN")
+ZOTERO_API="https://api.zotero.org"
+ZOTERO_API_USER=os.getenv("USER_ID")
+ZOTERO_API_TOKEN=os.getenv("TOKEN")
 
 headers = {
     'Accept': 'application/json',
@@ -33,6 +33,7 @@ def zotero(endpoint, debug=False):
             print(f"Response content: {response.text}")
     else:
         print(f"Request failed with status code: {response.status_code}")
+        print(f"Response header: {response.headers}")
         print(f"Response content: {response.text}")
         
   except requests.exceptions.RequestException as e:
@@ -84,7 +85,7 @@ def fetch_items_for_tag(tag):
                article = ancestor['article']
                break
             
-         if pdf is None:
+         if pdf is None and item['data']['parentItem']:
           pdf=zotero(f"/items/{item['data']['parentItem']}")
           article=zotero(f"/items/{pdf['data']['parentItem']}")
           ancestors.append({"pdf": pdf, "article": article})
@@ -92,6 +93,7 @@ def fetch_items_for_tag(tag):
          if pdf and article:
           annotation['authors'] = [a['lastName'] for a in article['data']['creators']]
           annotation['title'] = article['data']['title']
+          annotation['date'] = article['data']['date']
 
       result.append(annotation)
 
@@ -109,6 +111,7 @@ if __name__ == "__main__":
 
   content = f"# {tag} annotations\n"
   for item in items:
-    content = content + f"\n{item['text']} pg. {item['page']} (authors: {', '.join(item['authors'])}) (tags: {', '.join(item['tags'])})\n\n"
+    metadata = f"{', '.join(item['authors'])}, {item['date']}, p.{item['page']}"
+    content = content + f"\n{item['text']} ({metadata}) {', '.join(item['tags'])}\n\n"
 
   print(content)
