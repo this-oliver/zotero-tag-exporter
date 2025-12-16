@@ -1,4 +1,5 @@
 import os
+import sys
 import requests
 from dotenv import load_dotenv
 
@@ -68,16 +69,18 @@ def get_items_for_tag(tag):
 
    return result
 
-#tags = fetch_tags()
-#print(f"total tags: {len(tags)}")
-#print(tags)
+if __name__ == "__main__":
+  tag=sys.argv[1]
 
-#items = fetch_items()
-#print(f"total: {len(items)}")
-#print(items)
+  if tag == None:
+     raise ValueError("You need to pass a tag")
 
-tag="soa"
-items=get_items_for_tag("soa")
-print(f"total: {len(items)}")
-print(f"tag: {tag}")
-print(items)
+  items=get_items_for_tag(tag)
+  print(f"total: {len(items)}")
+  print(f"tag: {tag}")
+
+  content = f"# {tag} annotations\n"
+  for item in items:
+    content = content + f"\n{item['text']} pg. {item['page']} (tags: {', '.join(item['tags'])})\n\n"
+
+  print(content)
