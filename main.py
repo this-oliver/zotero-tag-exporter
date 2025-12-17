@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-ZOTERO_API="https://api.zotero.org"
+ZOTERO_API=os.getenv("BASE_URL", "https://api.zotero.org")
 ZOTERO_API_USER=os.getenv("USER_ID")
 ZOTERO_API_TOKEN=os.getenv("TOKEN")
 
