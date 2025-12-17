@@ -1,5 +1,6 @@
 import os
-import sys
+import time
+import argparse
 import requests
 from dotenv import load_dotenv
 
@@ -99,19 +100,39 @@ def fetch_items_for_tag(tag):
 
    return result
 
-if __name__ == "__main__":
-  tag=sys.argv[1]
+def main():
+  parser = argparse.ArgumentParser(prog="zotero exporter", description="exports stuff from zotero")
+  parser.add_argument('--tag', '-t', help="tag to extract annotations from", action="extend", nargs="+", type=str, dest="tag", required=True)
+  parser.add_argument('-d', '--debug', help="log debug info", action="store_true", dest="debug", default=False)
+  
+  args = parser.parse_args()
+  tags = args.tag
 
-  if tag == None:
-     raise ValueError("You need to pass a tag")
+  if tags is None or len(tags) == 0:
+     parser.print_help()
+     exit(1)
 
-  items=fetch_items_for_tag(tag)
-  print(f"total: {len(items)}")
-  print(f"tag: {tag}")
+  stopwatch_start = time.time()
+  results = [];
+  content = f"\n# annotations by tags\n"
+  
+  for tag in tags:
+    items=fetch_items_for_tag(tag)
+    results.append({"tag": tag, "items": items})
+    content += f"\n## {tag}\n"
+    
+    for item in items:
+      metadata = f"{', '.join(item['authors'])}, {item['date']}, p.{item['page']}"
+      content += f"\n{item['text']} ({metadata}) {', '.join(item['tags'])}\n\n"
 
-  content = f"# {tag} annotations\n"
-  for item in items:
-    metadata = f"{', '.join(item['authors'])}, {item['date']}, p.{item['page']}"
-    content = content + f"\n{item['text']} ({metadata}) {', '.join(item['tags'])}\n\n"
+  stopwatch_stop = time.time()
+  
+  total = 0
+  for r in results:
+      total = total + len(r['items'])
 
   print(content)
+  print(f"==== found {total} annotations for [{', '.join(tags)}] tags in {stopwatch_stop - stopwatch_start:.2} seconds ====")
+
+if __name__ == "__main__":
+   main()
