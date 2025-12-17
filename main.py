@@ -47,8 +47,8 @@ def fetch_tags(limit=100):
   
   return tags
 
-def fetch_items(limit=100):
-   data = zotero(f"/items?limit={limit}&format=json&include=data,bib,citation")
+def fetch_items(limit=100, include="data"):
+   data = zotero(f"/items?limit={limit}&include={include}")
    return data
 
 def fetch_single_item(id):
