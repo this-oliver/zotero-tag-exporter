@@ -17,7 +17,12 @@ headers = {
     'Zotero-API-Version': '3'
 }
 
-def zotero(endpoint, debug=False):
+def zotero(endpoint):
+  """
+  Docstring for zotero
+  
+  :param endpoint: Endpoint to the zotero api excluding the base url.
+  """
   try:
     # Make request to the correct endpoint, not the base URL
     response = requests.get(f"{ZOTERO_API}/users/{ZOTERO_API_USER}" + endpoint, headers=headers)
@@ -41,6 +46,11 @@ def zotero(endpoint, debug=False):
       print(f"Request error: {e}")
 
 def fetch_tags(limit=100):
+  """
+  Docstring for fetch_tags
+  
+  :param limit: An int between 1-100. Default is 100.
+  """
   tags = []
   for t in zotero(f"/tags?limit={limit}"):
      tags.append({"name": t['tag'], "annotations": t['meta']['numItems']})
@@ -48,13 +58,21 @@ def fetch_tags(limit=100):
   return tags
 
 def fetch_items(limit=100, include="data"):
+   """
+   Docstring for fetch_items
+   
+   :param limit: An int between 1-100. Default is 100.
+   :param include: Description
+   """
    data = zotero(f"/items?limit={limit}&include={include}")
    return data
 
-def fetch_single_item(id):
-   return zotero(f"/items/{id}")
-
-def fetch_items_for_tag(tag):
+def fetch_items_by_tag(tag):
+   """
+   Docstring for fetch_items_by_tag
+   
+   :param tag: Tag to filter PDFs and Articles by
+   """
    items_with_tag = []
    
    for item in fetch_items():
@@ -117,7 +135,7 @@ def main():
   content = f"\n# annotations by tags\n"
   
   for tag in tags:
-    items=fetch_items_for_tag(tag)
+    items=fetch_items_by_tag(tag)
     results.append({"tag": tag, "items": items})
     content += f"\n## {tag}\n"
     
