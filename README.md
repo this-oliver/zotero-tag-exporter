@@ -1,5 +1,7 @@
 # Zotero Tag Exporter
 
+> [![CI](https://github.com/this-oliver/zotero-tag-exporter/actions/workflows/ci.yaml/badge.svg)](https://github.com/this-oliver/zotero-tag-exporter/actions/workflows/ci.yaml) [![CD](https://github.com/this-oliver/zotero-tag-exporter/actions/workflows/cd.yaml/badge.svg)](https://github.com/this-oliver/zotero-tag-exporter/actions/workflows/cd.yaml)
+
 Exports annotations in the format `<text> (<authors>, <date>, <page>) <tags>)`.
 
 ## Geting started
